@@ -8,6 +8,10 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.support import expected_conditions
 from random import *
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -29,6 +33,7 @@ options.headless = True
 options.add_argument("--log-level=3")
 s=Service(executable_path=ChromeDriverManager().install())
 driver = webdriver.Chrome(service=s,options=options)
+actionChains = ActionChains(driver)
 
 # Printing the output to file for debugging
 sys.stdout = open('Process.log', 'w')
@@ -168,6 +173,9 @@ def exit():
     
     print('Exiting the script')
     
+    if driver:
+        driver.quit()
+    
     sys.exit()
     
 def add_to_dataframe():
@@ -176,7 +184,7 @@ def add_to_dataframe():
     
     global dataframe
     
-    dataframe = pd.read_csv('Donation.csv', sep=',')
+    dataframe = pd.read_csv('Donation.csv', sep=',', keep_default_na=False)
     
     print(dataframe)
     
@@ -213,19 +221,19 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     print('Adding donation in the Portal')
         
     # Enter First Name
-    if first_name == 'nan':
+    if first_name == '':
         first_name = '.'
 
     driver.find_element(By.ID, 'MainContent_txtfirstname').send_keys(first_name)
     
     # Enter Last Name
-    if last_name == 'nan':
+    if last_name == '':
         last_name = '.'
 
     driver.find_element(By.ID, 'MainContent_txtlastname').send_keys(last_name)
     
     # Enter Email
-    if email == 'nan':
+    if email == '':
         email = '.'
     
     driver.find_element(By.ID, 'MainContent_txtemail').send_keys(email)
@@ -237,11 +245,12 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(30)
     
     # Enter Donation Amount
-    if donation_amount == 'nan':
+    if donation_amount == '':
         donation_amount = '0'
     
-    driver.find_element(By.ID, 'MainContent_txtDonationamount').click()
-    driver.implicitly_wait(1)
+    # Dirty method to paste values for a stupid javascript validation
+    elem = driver.find_element(By.ID, 'MainContent_txtDonationamount')
+    actionChains.context_click(elem).perform()
     driver.find_element(By.ID, 'MainContent_txtDonationamount').send_keys(donation_amount)
     
     # Wait
@@ -249,18 +258,12 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     
     # Select Project (By Default others will be selected)
     driver.find_element(By.ID, 'MainContent_ddlProject').send_keys(project)
-    
-    if project == 'Others':
-        if project_name == 'nan':
-            project_name = 'Others'
-            
-        driver.find_element(By.ID, 'MainContent_txtProjectName').send_keys(project_name)
         
     # Wait
     driver.implicitly_wait(5)
         
     # Enter Affiliation
-    if affiliation == 'nan':
+    if affiliation == '':
         affiliation = 'Wellwisher'
 
     driver.find_element(By.ID, 'MainContent_ddlAffilation').send_keys(affiliation)
@@ -269,7 +272,7 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter Batch
-    if batch == 'nan':
+    if batch == '':
         batch = 'NA'
 
     driver.find_element(By.ID, 'MainContent_ddlBatch').send_keys(batch)
@@ -278,7 +281,7 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter Department
-    if department == 'nan':
+    if department == '':
         department = 'Other'
 
     driver.find_element(By.ID, 'MainContent_ddlDepartment').send_keys(department)
@@ -287,7 +290,7 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter Degree
-    if degree == 'nan':
+    if degree == '':
         degree = 'Other'
 
     driver.find_element(By.ID, 'MainContent_ddlDegree').send_keys(degree)
@@ -296,7 +299,7 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter Hostel
-    if hostel == 'nan':
+    if hostel == '':
         hostel = 'Other'
 
     driver.find_element(By.ID, 'MainContent_ddlHostel').send_keys(hostel)
@@ -305,21 +308,22 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter Address Line 1
-    if address_line_1 != 'nan':
+    print(f'Address Line: {address_line_1}')
+    if address_line_1 != '':
         driver.find_element(By.ID, 'MainContent_txtAddr1').send_keys(address_line_1)
         
         # Wait
         driver.implicitly_wait(5)
      
     # Enter Address Line 2
-    if address_line_2 != 'nan':
+    if address_line_2 != '':
         driver.find_element(By.ID, 'MainContent_txtAddr2').send_keys(address_line_2)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Country
-    if country == 'nan':
+    if country == '':
         country = 'Other'
 
     driver.find_element(By.ID, 'MainContent_ddlCountry').send_keys(country)
@@ -327,25 +331,30 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     # Wait
     driver.implicitly_wait(5)
     
-    # # Enter State
-    # if state == 'nan':
-    #     state = 'NA'
+    # Enter State
+    if state == '':
+        state = 'NA'
 
-    # driver.find_element(By.ID, 'MainContent_ddlState').send_keys(state)
+    driver.find_element(By.ID, 'MainContent_txtState').send_keys(state)
     
-    # # Wait
-    # driver.implicitly_wait(5)
+    # Wait
+    driver.implicitly_wait(5)
     
-    # # Enter City
-    # if city != 'nan':
-    #     driver.find_element(By.ID, 'MainContent_ddlCity').send_keys(city)
+    # Enter City
+    if city != '':
+        driver.find_element(By.ID, 'MainContent_txtCity').send_keys(city)
         
-    #     # Wait
-    #     driver.implicitly_wait(5)
+        # Wait
+        driver.implicitly_wait(5)
     
     # Enter Zip
-    if zip != 'nan':
-        driver.find_element(By.ID, 'MainContent_txtZipcode').send_keys(zip)
+    if zip != '':
+        # driver.find_element(By.ID, 'MainContent_txtZipcode').send_keys(zip)
+        
+        # Dirty method to paste values for a stupid javascript validation
+        elem = driver.find_element(By.ID, 'MainContent_txtZipcode')
+        actionChains.context_click(elem).perform()
+        driver.find_element(elem).send_keys(zip)
         
         # Wait
         driver.implicitly_wait(5)
@@ -358,70 +367,70 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
         driver.implicitly_wait(5)
     
     # Enter Contact No.
-    if phone != 'nan':
+    if phone != '':
         driver.find_element(By.ID, 'MainContent_txtContact').send_keys(phone)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Payment Type
-    if payment_type != 'nan':
+    if payment_type != '':
         driver.find_element(By.ID, 'MainContent_rbPaymentType_0').click()
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter CSR Type
-    if csr_type != 'nan':
+    if csr_type != '':
         driver.find_element(By.ID, 'MainContent_rbCSRType_0').click()
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Gift Type
-    if gift_type != 'nan':
+    if gift_type != '':
         driver.find_element(By.ID, 'MainContent_rbGiftType_1').click()
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter HF Grant No.
-    if office == 'HF' and hf_grant_no != 'nan':
+    if office == 'HF' and hf_grant_no != '':
         driver.find_element(By.ID, 'MainContent_txtHFGrant').send_keys(hf_grant_no)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Currency
-    if currency != 'nan':
+    if currency != '':
         driver.find_element(By.ID, 'MainContent_ddlCurrency').send_keys(currency)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Currency Amount
-    if currency_amount != 'nan':
+    if currency_amount != '':
         driver.find_element(By.ID, 'MainContent_txtCurrencyAmount').send_keys(currency_amount)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Currency Rate
-    if currency_rate != 'nan':
+    if currency_rate != '':
         driver.find_element(By.ID, 'MainContent_txtCurrencyRate').send_keys(currency_rate)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Remarks
-    if remarks != 'nan':
+    if remarks != '':
         driver.find_element(By.ID, 'MainContent_txtRemarks').send_keys(remarks)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Type of Transaction
-    if transaction_type == 'nan':
+    if transaction_type == '':
         transaction_type = 'NEFT/RTGS'
         
     driver.find_element(By.ID, 'MainContent_ddlTransaction').send_keys(transaction_type)
@@ -429,15 +438,22 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     # Wait
     driver.implicitly_wait(5)
     
+    # Enter Project Name
+    if project_name == '':
+        project_name = 'Others'
+        
+    driver.find_element(By.ID, 'MainContent_txtProjectName').clear()
+    driver.find_element(By.ID, 'MainContent_txtProjectName').send_keys(project_name)
+    
     # Enter Cheque No.
-    if cheque != 'nan':
+    if cheque != '':
         driver.find_element(By.ID, 'MainContent_txtChequeNo').send_keys(cheque)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Deposited Date
-    if deposited_date == 'nan':
+    if deposited_date == '':
         deposited_date = datetime.now().strftime("%d/%b/%Y")
         
     driver.find_element(By.ID, 'MainContent_txtChequeDate').send_keys(deposited_date)
@@ -446,7 +462,7 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter IFSC Code
-    if ifsc == 'nan':
+    if ifsc == '':
         ifsc = '.'
         
     driver.find_element(By.ID, 'MainContent_txtChequeBank').send_keys(ifsc)
@@ -455,7 +471,7 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter Account No.
-    if account_no == 'nan':
+    if account_no == '':
         account_no = '.'
         
     driver.find_element(By.ID, 'MainContent_txtAccountNo').send_keys(account_no)
@@ -464,14 +480,14 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter SAP Reference No.
-    if sap_reference_no != 'nan':
+    if sap_reference_no != '':
         driver.find_element(By.ID, 'MainContent_txt_sapreference').send_keys(sap_reference_no)
         
         # Wait
         driver.implicitly_wait(5)
     
     # Enter Office
-    if office == 'nan':
+    if office == '':
         office = 'ACR Office'
         
     driver.find_element(By.ID, 'MainContent_ddlOffice').send_keys(office)
@@ -480,9 +496,8 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Click the Donate Button
-    # driver.find_element(By.ID, 'MainContent_btn_Donation').click()
+    driver.find_element(By.ID, 'MainContent_btn_Donation').click()
 
-    
 def upload_donation_to_portal():
     
     # global first_name, last_name, email, donation_amount, project, project_name, affiliation, batch, department, degree, hostel, address_line_1, address_line_2, country, state, city, zip, pan, payment_type, csr_type, gift_type, hf_grant_no, currency, currency_amount, currency_rate, remarks, transaction_type, cheque, deposited_date, ifsc, account_no, sap_reference_no, office
@@ -533,7 +548,7 @@ def upload_donation_to_portal():
         enter_donation_in_portal(first_name, last_name, email, donation_amount, project, project_name, affiliation, batch, department, degree, hostel, address_line_1, address_line_2, country, state, city, zip, pan, phone, payment_type, csr_type, gift_type, hf_grant_no, currency, currency_amount, currency_rate, remarks, transaction_type, cheque, deposited_date, ifsc, account_no, sap_reference_no, office)
         
         # Close the browser
-        driver.quit()
+        # driver.quit()
         
         # Sleep for 2 seconds
         time.sleep(2)
@@ -548,12 +563,12 @@ try:
 
     
 except Exception as Argument:
-    send_error_emails(subject='Error while downloading opportunity list from Raisers Edge')
+    send_error_emails(subject='Error while uploading Donation in the Portal')
     
 finally:
     
     # Housekeeping
-    # housekeeping()
+    housekeeping()
     
     # Proper Exit
     exit()

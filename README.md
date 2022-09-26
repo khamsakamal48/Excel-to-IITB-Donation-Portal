@@ -1,3 +1,3 @@
-# Excel-to-IITB-Donation-Portal
+# Excel to IITB Donation Portal
 
 #
