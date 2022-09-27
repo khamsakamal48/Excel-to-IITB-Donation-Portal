@@ -66,4 +66,4 @@ The script will,
 ## Notes
 - The dates in the **Donation.csv** file should be in the format: **27/Sep/2022**
 - The values in the CSV file should match the dropdown entries as in the IITB Donation Portal
-- The Project is by default selected as 'Others' and the values from the CSV file is captured in the Project Name
+- The Project is by default selected as *'Others'* and the values from the CSV file is captured in the Project Name
