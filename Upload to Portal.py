@@ -332,17 +332,23 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter State
-    if state == '':
-        state = 'NA'
-
-    driver.find_element(By.ID, 'MainContent_txtState').send_keys(state)
-    
-    # Wait
-    driver.implicitly_wait(5)
+    if state != '':
+        
+        if country == 'India':
+            driver.find_element(By.ID, 'MainContent_ddlState').send_keys(state)
+        else:
+            driver.find_element(By.ID, 'MainContent_txtState').send_keys(state)
+        
+        # Wait
+        driver.implicitly_wait(5)
     
     # Enter City
     if city != '':
-        driver.find_element(By.ID, 'MainContent_txtCity').send_keys(city)
+        
+        if country == 'India':
+            driver.find_element(By.ID, 'MainContent_ddlCity').send_keys(city)
+        else:
+            driver.find_element(By.ID, 'MainContent_txtCity').send_keys(city)
         
         # Wait
         driver.implicitly_wait(5)
