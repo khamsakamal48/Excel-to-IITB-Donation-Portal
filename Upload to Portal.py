@@ -312,7 +312,6 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     driver.implicitly_wait(5)
     
     # Enter Address Line 1
-    print(f'Address Line: {address_line_1}')
     if address_line_1 != '':
         driver.find_element(By.ID, 'MainContent_txtAddr1').send_keys(address_line_1)
         
