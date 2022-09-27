@@ -24,17 +24,6 @@ from datetime import datetime, date
 # Set current directory
 os.chdir(os.getcwd())
 
-# Disable Webdriver messages
-os.environ['WDM_LOG_LEVEL'] = '0'
-
-# Load webdriver with options
-options = webdriver.ChromeOptions()
-options.headless = True
-options.add_argument("--log-level=3")
-s=Service(executable_path=ChromeDriverManager().install())
-driver = webdriver.Chrome(service=s,options=options)
-actionChains = ActionChains(driver)
-
 # Printing the output to file for debugging
 sys.stdout = open('Process.log', 'w')
 
@@ -53,6 +42,21 @@ ERROR_EMAILS_TO  = os.getenv("ERROR_EMAILS_TO")
 URL = os.getenv("URL")
 LOGIN = os.getenv("LOGIN")
 PASSWORD = os.getenv("PASSWORD")
+
+def load_webdriver():
+    
+    global driver, actionChains
+    
+    # Disable Webdriver messages
+    os.environ['WDM_LOG_LEVEL'] = '0'
+
+    # Load webdriver with options
+    options = webdriver.ChromeOptions()
+    options.headless = True
+    options.add_argument("--log-level=3")
+    s=Service(executable_path=ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=s,options=options)
+    actionChains = ActionChains(driver)
         
 def send_error_emails(subject):
     print("Sending email for an error")
@@ -355,7 +359,6 @@ def enter_donation_in_portal(first_name, last_name, email, donation_amount, proj
     
     # Enter Zip
     if zip != '':
-        # driver.find_element(By.ID, 'MainContent_txtZipcode').send_keys(zip)
         
         # Dirty method to paste values for a stupid javascript validation
         elem = driver.find_element(By.ID, 'MainContent_txtZipcode')
@@ -510,6 +513,8 @@ def upload_donation_to_portal():
     
     for index, row in dataframe.iterrows():
         
+        load_webdriver()
+        
         first_name = row['First Name']
         last_name = row['Last name']
         email = row['Email']
@@ -554,7 +559,8 @@ def upload_donation_to_portal():
         enter_donation_in_portal(first_name, last_name, email, donation_amount, project, project_name, affiliation, batch, department, degree, hostel, address_line_1, address_line_2, country, state, city, zip, pan, phone, payment_type, csr_type, gift_type, hf_grant_no, currency, currency_amount, currency_rate, remarks, transaction_type, cheque, deposited_date, ifsc, account_no, sap_reference_no, office)
         
         # Close the browser
-        # driver.quit()
+        driver.close()
+        driver.quit()
         
         # Sleep for 2 seconds
         time.sleep(2)
